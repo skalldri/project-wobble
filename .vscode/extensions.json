@@ -3,6 +3,7 @@
         "ms-vscode.powershell",
         "twxs.cmake",
         "vector-of-bool.cmake-tools",
-        "marus25.cortex-debug"
+        "marus25.cortex-debug",
+        "ms-vscode.cpptools"
     ]
 }
