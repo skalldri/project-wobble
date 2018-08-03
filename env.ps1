@@ -18,7 +18,7 @@ try {
     Write-Host -ForegroundColor Green "Chocolatey is installed"
 }
 catch {
-    Write-Host -ForegroundColor Orange "Chocolatey is not installed"
+    Write-Host -ForegroundColor Yellow "Chocolatey is not installed"
     # TODO: try to auto install chocolatey
     Write-Host -ForegroundColor Red "Installing Chocolatey is not supported. Please install Chocolatey and re-run this script"
     exit
@@ -29,13 +29,13 @@ $packages = @("git", "python", "ninja", "dtc-msys2", "gperf")
 # Setup for first-time use
 if ($init)
 {
-    . choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-    . choco install git python ninja dtc-msys2 gperf nuget.commandline
+    . choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+    . choco install -y git python ninja dtc-msys2 gperf nuget.commandline
 
     # install ARM GCC toolchain
 
     # run:
-    # pip3 install --user -r scripts/requirements.txt
+    pip3 install --user -r zephyr/scripts/requirements.txt
     # from zephyr project
 }
 
@@ -111,7 +111,7 @@ else
 	Write-Warning "Install J-Link from SEGGER Website"
 }
 
-$env:ZEPHYR_BASE="C:\Users\skall\Documents\GitHub\zephyr"
+$env:ZEPHYR_BASE="$PSScriptRoot\zephyr"
 Set-Alias -Name west -Value ". py -3 $env:ZEPHYR_BASE\scripts\west-win.py" -Scope 1
 
 
