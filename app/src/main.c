@@ -5,54 +5,38 @@
 #include <sensor.h>
 #include <i2c.h>
 #include <stdio.h>
+#include "imu.h"
+#include "temperature.h"
 
-#define I2C_DEV CONFIG_I2C_0_NAME
-#define TEMP_DEV "TEMP_0"
+#define IMU_TASK_STACK_SIZE (512)
+K_THREAD_STACK_DEFINE(imu_task_stack, IMU_TASK_STACK_SIZE);
+static struct k_thread imu_data;
+
+#define TEMPERATURE_TASK_STACK_SIZE (512)
+K_THREAD_STACK_DEFINE(temperature_task_stack, TEMPERATURE_TASK_STACK_SIZE);
+static struct k_thread temperature_data;
 
 void main(void)
 {
-	struct device* i2c_dev;
+	k_thread_create(&temperature_data, 						
+					temperature_task_stack,					// Data buffer for thread stack
+					TEMPERATURE_TASK_STACK_SIZE,			// Thread stack size 
+					(k_thread_entry_t) temperature_task, 	// Thread function
+					NULL, 									// Parameter 1
+					NULL, 									// Parameter 2
+					NULL, 									// Parameter 3
+					K_PRIO_COOP(7),							// Thread priority 
+					0, 										// Thread options
+					K_NO_WAIT);								// Scheduling delay
 
-	printf("\r\n");
-
-	i2c_dev = device_get_binding(I2C_DEV);
-	if (!i2c_dev) {
-		printf("I2C: Device driver not found.\r\n");
-		return;
-	}
-
-    struct device* temp_sensor;
-
-	temp_sensor = device_get_binding(TEMP_DEV);
-	if (!temp_sensor) {
-		printf("Temperature: no temp device\r\n");
-		return;
-	}
-
-	printf("temp device is %p, name is %s\r\n",
-	       temp_sensor, temp_sensor->config->name);
-
-	while (1) 
-	{
-		int r;
-		struct sensor_value temp_value;
-
-		r = sensor_sample_fetch(temp_sensor);
-		if (r) 
-		{
-			printf("sensor_sample_fetch failed return: %d\r\n", r);
-			break;
-		}
-
-		r = sensor_channel_get(temp_sensor, SENSOR_CHAN_DIE_TEMP, &temp_value);
-		if (r) 
-		{
-			printf("sensor_channel_get failed return: %d\r\n", r);
-			break;
-		}
-
-		printf("Temperature is %gC\r\n", sensor_value_to_double(&temp_value));
-
-		k_sleep(1000);
-	}
+	k_thread_create(&imu_data, 						
+					imu_task_stack,							// Data buffer for thread stack
+					IMU_TASK_STACK_SIZE,					// Thread stack size 
+					(k_thread_entry_t) imu_task, 			// Thread function
+					NULL, 									// Parameter 1
+					NULL, 									// Parameter 2
+					NULL, 									// Parameter 3
+					K_PRIO_COOP(7),							// Thread priority 
+					0, 										// Thread options
+					K_NO_WAIT);								// Scheduling delay
 }
