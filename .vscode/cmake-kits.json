@@ -1,0 +1,6 @@
+[
+    {
+        "name": "ARM GCC Toolchain",
+        "toolchainFile": "${workspaceRoot}/zephyr/cmake/toolchain/gccarmemb.cmake"
+    }
+]
