@@ -1,7 +1,0 @@
-/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/kvaillancourt/CLionProjects/project-wobble/app
-CMake Error at CMakeLists.txt:4 (target_sources):
-  Cannot specify sources for target "app" which is not built by this project.
-
-
--- Configuring incomplete, errors occurred!
-See also "/Users/kvaillancourt/CLionProjects/project-wobble/app/cmake-build-debug/CMakeFiles/CMakeOutput.log".
