@@ -3,5 +3,8 @@
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.loggingLevel": "Information",
-    "cortex-debug.armToolchainPath": "${workspaceFolder}/pkg/autom8ed.com.compilers.arm-none-eabi-gcc.6.3.1/bin/"
+    "cortex-debug.armToolchainPath": "${workspaceFolder}/pkg/autom8ed.com.compilers.arm-none-eabi-gcc.6.3.1/bin/",
+    "files.associations": {
+        "mpu6050.h": "c"
+    }
 }
