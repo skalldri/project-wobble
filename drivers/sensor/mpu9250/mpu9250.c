@@ -13,6 +13,7 @@
 #include <sensor.h>
 
 #include "mpu9250.h"
+#include "mpu9250_config.h"
 
 /* see "Accelerometer Measurements" section from register map description */
 static void mpu9250_convert_accel(struct sensor_value *val, s16_t raw_val,

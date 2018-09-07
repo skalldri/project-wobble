@@ -47,15 +47,17 @@ Set Enviorment Variables:
 You must do this EVERY new terminal session. The command is:
     export <VAR_NAME> = <path/to/variable>
 
-EPHYR_BASE=<project/folder>/project-wobble/zephyr
+*/Users/kvaillancourt
+
+ZEPHYR_BASE=<project/folder>/project-wobble/zephyr
 ZEPHYR_TOOLCHAIN_VARIANT=gccarmemb
 GCCARMEMB_TOOLCHAIN_PATH=<gcc/folder>/gcc-arm-none-eabi-7-2018-q2-update
 
-Run Project:
-Cmake -GNinja -DBOARD=nrf52_pca10040 ../app/ 
+Configure Project:
+> Cmake -GNinja -DBOARD=nrf52_pca10040 ../ 
 
-Detect board for Debugging: 
-JLinkGDBServer -if SWD -device NRF52832_XXAA
+Run Project:
+> ninja
 
 #################### DEBUG ####################
 
@@ -68,3 +70,6 @@ Download & Run Firmware:
     Debug symbol
     Play symbol
     (Debug breaks will ensue)
+
+Alternate debug method via terminal: 
+> JLinkGDBServer -if SWD -device NRF52832_XXAA
