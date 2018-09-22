@@ -1,0 +1,49 @@
+# Kconfig - LCD1602 I2C Character LCD device configuration options
+
+menuconfig LCD1602
+	bool
+	prompt "LCD1602 I2C Character LCD Device"
+	depends on I2C
+	help
+	  Enable driver for LCD1602 I2C-based character LCD device.
+
+config LCD1602_NAME
+	string
+	prompt "Driver name"
+	default "LCD1602"
+	depends on LCD1602
+	help
+	  Device name with which the LCD1602 sensor is identified.
+
+config LCD1602_I2C_ADDR
+	hex
+	prompt "I2C address"
+	depends on LCD1602
+	default 0x27
+	range 0x20 0x27
+	help
+	  I2C address of the LCD1602 device.
+	  See the PCF8574 datasheet for information on determining the I2C address.
+
+config LCD1602_I2C_MASTER_DEV_NAME
+	string
+	prompt "I2C master where LCD1602 is connected"
+	depends on LCD1602
+	default "I2C_0"
+	help
+	  Specify the device name of the I2C master device to which LCD1602 is
+	  connected.
+
+config LCD1602_LCD_COLUMNS
+	int
+	prompt "LCD Columns"
+	depends on LCD1602
+	help
+	  Number of columns the on the display attached to the LCD1602.
+
+config LCD1602_LCD_ROWS
+	int
+	prompt "LCD Rows"
+	depends on LCD1602
+	help
+	  Number of columns the on the display attached to the LCD1602.

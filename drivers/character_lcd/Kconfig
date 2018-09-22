@@ -1,0 +1,13 @@
+# Kconfig - Character LCD drivers
+
+menuconfig CHARACTER_LCD
+	bool
+	prompt "Character LCD Drivers"
+	help
+	  Enable Character LCD drivers
+
+if CHARACTER_LCD
+
+source "drivers/character_lcd/Kconfig.lcd1602"
+
+endif # CHARACTER_LCD

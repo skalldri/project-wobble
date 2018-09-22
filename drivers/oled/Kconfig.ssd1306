@@ -1,0 +1,44 @@
+# Kconfig - SSD1306 display driver configuration options
+
+config SSD1306
+	bool "SSD1306 OLED Display Driver"
+	depends on I2C
+	help
+	  Driver for the SSD1306 OLED display driver (I2C)
+
+config SSD1306_NAME
+	string
+	prompt "Driver name"
+	default "SSD1306"
+	depends on SSD1306
+	help
+	  Device name with which the SSD1306 sensor is identified.
+
+config SSD1306_I2C_ADDR
+	hex
+	prompt "I2C address"
+	depends on SSD1306
+	default 0x3C
+	range 0x3C 0x3D
+	help
+	  I2C address of the SSD1306 device.
+	  See the SSD1306 datasheet for information on determining the I2C address.
+
+config SSD1306_I2C_MASTER_DEV_NAME
+	string
+	prompt "I2C master where SSD1306 is connected"
+	depends on SSD1306
+	default "I2C_0"
+	help
+	  Specify the device name of the I2C master device to which SSD1306 is
+	  connected.
+
+config SSD1306_OLED_ROWS
+	int
+	prompt "OLED Rows"
+	depends on SSD1306
+	default 32
+	range 32 64
+	help
+	  Number of rows the on the OLED display attached to the SSD1306.
+	  NOTE: The only valid values are 32 and 64! Values in-between are not valid.
