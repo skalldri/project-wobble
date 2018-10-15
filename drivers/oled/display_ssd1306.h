@@ -74,4 +74,6 @@ struct ssd1306_data {
     display_rows rows;
 };
 
+int ssd1306_refresh(struct device* dev);
+
 #endif // DISPLAY_SSD1306_H

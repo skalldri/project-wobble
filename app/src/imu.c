@@ -25,14 +25,17 @@ void imu_task(void *arg1, void *arg2, void *arg3)
 
 	while(true) {
 		sensor_sample_fetch(i2c_dev); // gets next sample from driver
-		// sensor_channel_get(i2c_dev, SENSOR_CHAN_ACCEL_XYZ, sensor_values);
-		// printf("accel x: %e\n", sensor_value_to_double(&sensor_values[0]));
-		// printf("accel y: %e\n", sensor_value_to_double(&sensor_values[1]));
-		// printf("accel z: %e", sensor_value_to_double(&sensor_values[2]));
+
+		sensor_channel_get(i2c_dev, SENSOR_CHAN_ACCEL_XYZ, sensor_values);
+		printf("accel x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
+		printf("accel y: %e\r\n", sensor_value_to_double(&sensor_values[1]));
+		printf("accel z: %e\r\n", sensor_value_to_double(&sensor_values[2]));
 
 		sensor_channel_get(i2c_dev, SENSOR_CHAN_GYRO_XYZ, sensor_values);
-		printf("gyro x: %e\n", sensor_value_to_double(&sensor_values[0]));
-		printf("gyro y: %e\n", sensor_value_to_double(&sensor_values[1]));
-		printf("gyro z: %e", sensor_value_to_double(&sensor_values[2]));
+		printf("gyro x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
+		printf("gyro y: %e\r\n", sensor_value_to_double(&sensor_values[1]));
+		printf("gyro z: %e\r\n", sensor_value_to_double(&sensor_values[2]));
+
+		k_sleep(10);
 	}
 }

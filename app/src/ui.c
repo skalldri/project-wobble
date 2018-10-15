@@ -8,30 +8,24 @@
 #include "ui.h"
 
 #define LCD_DEV "lcd1602"
+#define OLED_DEV "ssd1306"
 
 void ui_task(void *arg1, void *arg2, void *arg3)
 {
-    struct device* lcd_dev;
+    struct device* oled_dev;
 
 	printf("\r\n");
 
-	lcd_dev = device_get_binding(LCD_DEV);
-	if (!lcd_dev) {
-		printf("LCD: Device driver not found.\r\n");
-		return;
-	}
+    oled_dev = device_get_binding(OLED_DEV);
+    if (!oled_dev) {
+		printf("OLED: Device driver not found.\r\n");
+        return;
+    }
 
-    lcd1602_write(lcd_dev, 'H');
-    lcd1602_write(lcd_dev, 'E');
-    lcd1602_write(lcd_dev, 'L');
-    lcd1602_write(lcd_dev, 'L');
-    lcd1602_write(lcd_dev, 'O');
-    lcd1602_write(lcd_dev, ' ');
-    lcd1602_write(lcd_dev, 'W');
-    lcd1602_write(lcd_dev, 'O');
-    lcd1602_write(lcd_dev, 'R');
-    lcd1602_write(lcd_dev, 'L');
-    lcd1602_write(lcd_dev, 'D');
+    ssd1306_refresh(oled_dev);
 
-    lcd1602_set_backlight(lcd_dev, true);
+    while(true)
+    {
+        k_sleep(1000);
+    }
 }

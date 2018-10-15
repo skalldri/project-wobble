@@ -1,6 +1,9 @@
 [
     {
         "name": "ARM GCC Toolchain",
-        "toolchainFile": "${workspaceRoot}/zephyr/cmake/toolchain/gccarmemb.cmake"
+        "toolchainFile": "${workspaceRoot}/zephyr/cmake/toolchain/gccarmemb.cmake",
+        "cmakeSettings": {
+            "BOARD":"nrf52_pca10040"
+        }
     }
 ]

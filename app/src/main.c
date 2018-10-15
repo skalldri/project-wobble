@@ -9,20 +9,26 @@
 #include "temperature.h"
 #include "ui.h"
 
-#define IMU_TASK_STACK_SIZE (512)
+#include "nrf52.h"
+
+#define IMU_TASK_STACK_SIZE (2048)
 K_THREAD_STACK_DEFINE(imu_task_stack, IMU_TASK_STACK_SIZE);
 static struct k_thread imu_data;
 
-#define TEMPERATURE_TASK_STACK_SIZE (512)
+#define TEMPERATURE_TASK_STACK_SIZE (2048)
 K_THREAD_STACK_DEFINE(temperature_task_stack, TEMPERATURE_TASK_STACK_SIZE);
 static struct k_thread temperature_data;
 
-#define UI_TASK_STACK_SIZE (512)
+#define UI_TASK_STACK_SIZE (2048)
 K_THREAD_STACK_DEFINE(ui_task_stack, UI_TASK_STACK_SIZE);
 static struct k_thread ui_data;
 
 void main(void)
 {
+	// Disable pin reset
+	/*NRF_UICR->PSELRESET[0] = 0x0;
+	NRF_UICR->PSELRESET[1] = 0x1;*/
+
 	k_thread_create(&temperature_data, 						
 					temperature_task_stack,					// Data buffer for thread stack
 					TEMPERATURE_TASK_STACK_SIZE,			// Thread stack size 
