@@ -10,3 +10,8 @@ target_sources(app PRIVATE
     drivers/sensor/mpu9250/mpu9250.c
     drivers/oled/display_ssd1306.c
     )
+
+target_include_directories(app PUBLIC
+    drivers/oled
+    drivers/sensor/mpu9250
+)
