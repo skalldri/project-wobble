@@ -76,12 +76,14 @@ void ui_task(void *arg1, void *arg2, void *arg3)
     refresh_display(oled_dev);
     k_sleep(1000);
 
+    int i = 0;
     while(true)
     {
         ssd1306_clear_backbuffer();
-        draw_bitmap(10, 30, s_smileyBitmap, 16, 16);
+        draw_bitmap(10, i, s_smileyBitmap, 16, 16);
         refresh_display(oled_dev);
-        k_sleep(1000);
+        k_sleep(100);
+        i = (i + 1) % 48;
     }
 }
 
