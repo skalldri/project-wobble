@@ -23,16 +23,16 @@ DIYmall OLED - screen, based on SSD1306 Driver
 
 ## DEPENDANCIES
 Chocolatey (Windows Only) - skip this section and run env.ps1 instead
-Homebrew (MacOS only) - used to install software packages
-git - code history
-zephyr (http://docs.zephyrproject.org/) - Operating System used for this project
-ninja - dependancy for zephyr
-python - dependancy for ninja
 
-ZEPHYR - install all dependancies. Follow this guide:
-http://docs.zephyrproject.org/getting_started/getting_started.html
+Homebrew (MacOS only) - used to install software packages
+
+- git - code history
+- ninja - dependancy for zephyr
+- python - dependancy for ninja
+- ZephyrOS - install all dependancies. Follow this guide: http://docs.zephyrproject.org/getting_started/getting_started.html
 
 Ninja menu config:
+
 go into build folder:
 
     > ninja menuconfig
