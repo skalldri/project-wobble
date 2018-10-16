@@ -1,9 +1,9 @@
-########################## project-wobble ##########################
+# project-wobble
 This is a program designed to incorporate several hardware components to produce a self balancing robot.
 Authors: Stuart Alldrit <skalldri>
          Kara Vaillancourt <kvaillancourt>
 
-#################### HARDWARE ####################
+## HARDWARE
 Nordic nrf52 - Microcontroller, bluetooth radio 
     http://infocenter.nordicsemi.com/pdf/nRF52_DK_User_Guide_v1.2.pdf
     http://infocenter.nordicsemi.com/pdf/nRF52832_PS_v1.1.pdf
@@ -13,7 +13,7 @@ DRV8825 - Stepper Motor Driver
     http://www.ti.com/lit/ds/symlink/drv8825.pdf
 DIYmall OLED - screen
 
-#################### DEPENDANCIES ####################
+## DEPENDANCIES
 Chocolatey (Windows Only) - skip this section and run env.ps1 instead
 Homebrew (MacOS only) - used to install software packages
 git - code history
@@ -42,7 +42,7 @@ Device Drivers > Sensor Drivers > nrf5 Temperature Sensor > (1) TEMP interrupt p
 
 > o (select 'prj.conf' file inside project wobble folder) (loads all files in the file)
 
-#################### SETUP ####################
+## SETUP
 Set Enviorment Variables: 
 You must do this EVERY new terminal session. The command is:
     export <VAR_NAME> = <path/to/variable>
@@ -59,7 +59,7 @@ Configure Project:
 Run Project:
 > ninja
 
-#################### DEBUG ####################
+## DEBUG
 
 OS Print:
     Open telnet
