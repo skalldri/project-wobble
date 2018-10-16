@@ -1,0 +1,25 @@
+buildType:
+  default: debug
+  description: Build debug or release builds.
+  choices:
+    debug:
+      short: Debug
+      buildType: Debug
+    release:
+      short: Release
+      buildType: Release
+
+board:
+  default: nrf52832-DK
+  description: Select the board you want to flash.
+  choices:
+    nrf52832-DK:
+      short: NRF52832-DK
+      long: Build for the NRF52832-DK (Small robot motherboard)
+      settings:
+        BOARD: nrf52_pca10040
+    nrf52840-DK:
+      short: NRF52840-DK
+      long: Build for the NRF52840-DK (Large robot dev kit)
+      settings:
+        BOARD: nrf52840_pca10056
