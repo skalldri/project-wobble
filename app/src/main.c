@@ -8,6 +8,7 @@
 #include "imu.h"
 #include "temperature.h"
 #include "ui.h"
+#include "bt.h"
 
 #include "nrf52.h"
 
@@ -22,6 +23,10 @@ static struct k_thread temperature_data;
 #define UI_TASK_STACK_SIZE (2048)
 K_THREAD_STACK_DEFINE(ui_task_stack, UI_TASK_STACK_SIZE);
 static struct k_thread ui_data;
+
+#define BLUETOOTH_TASK_STACK_SIZE (2048)
+K_THREAD_STACK_DEFINE(bluetooth_task_stack, BLUETOOTH_TASK_STACK_SIZE);
+static struct k_thread bluetooth_data;
 
 void main(void)
 {
@@ -55,6 +60,17 @@ void main(void)
 					ui_task_stack,							// Data buffer for thread stack
 					UI_TASK_STACK_SIZE,						// Thread stack size 
 					(k_thread_entry_t) ui_task, 			// Thread function
+					NULL, 									// Parameter 1
+					NULL, 									// Parameter 2
+					NULL, 									// Parameter 3
+					K_PRIO_COOP(7),							// Thread priority 
+					0, 										// Thread options
+					K_NO_WAIT);								// Scheduling delay
+	
+	k_thread_create(&bluetooth_data, 						
+					bluetooth_task_stack,					// Data buffer for thread stack
+					BLUETOOTH_TASK_STACK_SIZE,			    // Thread stack size 
+					(k_thread_entry_t) bluetooth_task,   	// Thread function
 					NULL, 									// Parameter 1
 					NULL, 									// Parameter 2
 					NULL, 									// Parameter 3
