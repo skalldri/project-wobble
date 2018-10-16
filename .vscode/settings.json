@@ -3,8 +3,12 @@
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.loggingLevel": "Information",
-    "cortex-debug.armToolchainPath": "/Users/kvaillancourt/gcc-arm-none-eabi-7-2018-q2-update/bin/",
     "files.associations": {
-        "mpu6050.h": "c"
-    }
+        "mpu6050.h": "c",
+        "stdio.h": "c",
+        "xutility": "c",
+        "array": "c"
+    },
+    "cmake.configureOnOpen": true,
+    "cortex-debug.armToolchainPath": "${workspaceFolder}/pkg/autom8ed.com.compilers.arm-none-eabi-gcc.6.3.1/bin/"
 }
