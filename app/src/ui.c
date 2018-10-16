@@ -6,9 +6,9 @@
 #include <i2c.h>
 #include <stdio.h>
 #include <display_ssd1306.h>
+#include <config_display_ssd1306.h>
 
 #include "ui.h"
-
 
 // Definitions
 #define LCD_DEV "lcd1602"
@@ -75,15 +75,29 @@ void ui_task(void *arg1, void *arg2, void *arg3)
     // Print the back-buffer logo
     refresh_display(oled_dev);
     k_sleep(1000);
+    //ssd1306_clear_backbuffer();
 
-    int i = 0;
+    int x = 0, y = 0;
+    int dirx = 1, diry = 1;
     while(true)
     {
-        ssd1306_clear_backbuffer();
-        draw_bitmap(10, i, s_smileyBitmap, 16, 16);
-        refresh_display(oled_dev);
-        k_sleep(100);
-        i = (i + 1) % 48;
+        ssd1306_draw_pixel(x, y, FLIP_COLOR);
+        //ssd1306_clear_backbuffer();
+        //draw_bitmap(x, y, s_smileyBitmap, 16, 16);
+        //refresh_display(oled_dev);
+        k_sched_lock();
+        {
+            ssd1306_refresh_region(oled_dev, x, y, 1, 1);
+        }
+        k_sched_unlock();
+        if (x + dirx < 0 || x + dirx >= CONFIG_SSD1306_OLED_COLUMNS - 1)
+        {
+            dirx *= -1;
+        } else x += dirx;
+        if (y + diry < 0 || y + diry >= CONFIG_SSD1306_OLED_ROWS - 1)
+        {
+            diry *= -1;
+        } else y += diry;
     }
 }
 

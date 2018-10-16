@@ -80,6 +80,7 @@ typedef enum {
 // Users should _ALWAYS_ explicitly convert PIXEL_COLOR::BACKGROUND and PIXEL_COLOR::FOREGROUND to 0 and 1.
 typedef enum {
     BACKGROUND,
+    FLIP_COLOR,
     FOREGROUND,
 
     // !!! Insert new colors above this line !!!
@@ -97,6 +98,7 @@ struct ssd1306_data {
 
 #define IS_VALID_PIXEL_COLOR(color) ((color) < PIXEL_COLOR_COUNT)
 
+int ssd1306_refresh_region(struct device* dev, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 int ssd1306_refresh(struct device* dev);
 void ssd1306_clear_backbuffer();
 void ssd1306_draw_pixel(uint16_t x, uint16_t y, PIXEL_COLOR color);

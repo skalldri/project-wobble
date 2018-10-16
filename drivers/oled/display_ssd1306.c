@@ -1,3 +1,6 @@
+// TODO: Find a better way to enable asserts
+#define __ASSERT_ON 1
+
 #include <i2c.h>
 #include <init.h>
 #include <string.h>
@@ -7,7 +10,8 @@
 
 // the memory buffer for the LCD
 // TODO: make this part of the driver data so multiple driver instances can exist
-static uint8_t s_backBuffer[(CONFIG_SSD1306_OLED_ROWS * CONFIG_SSD1306_OLED_COLUMNS) / 8] = {
+static uint8_t s_backBuffer[(CONFIG_SSD1306_OLED_ROWS * CONFIG_SSD1306_OLED_COLUMNS) / 8 + 1] = {
+    0x00, // Padding hack to allow for direct i2c writes.
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -203,42 +207,43 @@ Exit:
     return ssd1306_status;
 }
 
-// Send the contents of the back buffer to the display
-int ssd1306_refresh(struct device* dev)
+// Update the contents of a subregion of the back buffer on the display
+// The exact bounds of the region are not guaranteed, overdraw may occur.
+int ssd1306_refresh_region(struct device* dev, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
+    __ASSERT(x >= 0 && y >= 0, "Display refresh region out of bounds.");
+    __ASSERT(x + width <= CONFIG_SSD1306_OLED_COLUMNS, "Display refresh region out of bounds.");
+    __ASSERT(y + height <= CONFIG_SSD1306_OLED_ROWS, "Display refresh region out of bounds.");
+
     struct ssd1306_data *drv_data = dev->driver_data;
     int status = 0;
 
     ssd1306_send_command(dev, SSD1306_COLUMNADDR);
-    ssd1306_send_command(dev, 0);   // Column start address (0 = reset)
-    ssd1306_send_command(dev, CONFIG_SSD1306_OLED_COLUMNS-1); // Column end address (127 = reset)
+    ssd1306_send_command(dev, x);   // Column start address
+    ssd1306_send_command(dev, x + width - 1); // Column end address
 
     ssd1306_send_command(dev, SSD1306_PAGEADDR);
-    ssd1306_send_command(dev, 0); // Page start address (0 = reset)
-
-#if CONFIG_SSD1306_OLED_ROWS == 64
-    ssd1306_send_command(dev, 7); // Page end address
-#elif CONFIG_SSD1306_OLED_ROWS == 32
-    ssd1306_send_command(dev, 3); // Page end address
-#elif CONFIG_SSD1306_OLED_ROWS == 16
-    ssd1306_send_command(dev, 1); // Page end address
-#endif
+    ssd1306_send_command(dev, y / 8); // Page start address
+    ssd1306_send_command(dev, (y + height - 1) / 8); // Page end address
 
     // I2C
-    for (uint16_t i = 0; i < ((CONFIG_SSD1306_OLED_COLUMNS * CONFIG_SSD1306_OLED_ROWS) / 8); i += 16)
+    // Divide height by 8 while rounding up.
+    for (uint16_t row = 0; row < (1 + (height - 1) / 8); row++)
     {
         // Do not use i2c_burst_write for this application.
         // The Zephyr I2C API will insert a repeat-start condition between writing the register address
         // and the data blob, which confuses the SSD1306. Zephyr also does not support scatter-gather I2C 
         // data transactions.
-        // Create a command buffer here to hold the full command (0x40 + 16 data bytes) before transmitting to the 
-        // chip as one long i2C_write.
-        uint8_t command[17];
-        
-        command[0] = 0x40;
-        memcpy(&command[1], &s_backBuffer[i], 16);
 
-        status = i2c_write(drv_data->i2c, command, sizeof(command), CONFIG_SSD1306_I2C_ADDR);
+        size_t offset = x + ((y / 8 + row) * CONFIG_SSD1306_OLED_COLUMNS);
+
+        // We need to add the i2c command before the data, so store the previous byte temporarily.
+        uint8_t tmp = s_backBuffer[offset];
+        s_backBuffer[offset] = 0x40;
+
+        status = i2c_write(drv_data->i2c, &s_backBuffer[offset], sizeof(uint8_t) * width + 1, CONFIG_SSD1306_I2C_ADDR);
+
+        s_backBuffer[offset] = tmp;
 
         if (status != 0)
         {
@@ -263,6 +268,12 @@ int ssd1306_refresh(struct device* dev)
     return status;
 }
 
+// Send the contents of the back buffer to the display
+int ssd1306_refresh(struct device* dev)
+{
+    return ssd1306_refresh_region(dev, 0, 0, CONFIG_SSD1306_OLED_COLUMNS, CONFIG_SSD1306_OLED_ROWS);
+}
+
 // Clear the contents of the backbuffer
 void ssd1306_clear_backbuffer()
 {
@@ -276,14 +287,19 @@ void ssd1306_draw_pixel(uint16_t x, uint16_t y, PIXEL_COLOR color)
         return;
     }
 
+    size_t offset = 1 + x + ((y / 8) * CONFIG_SSD1306_OLED_COLUMNS);
     switch (color)
     {
         case FOREGROUND:
-            s_backBuffer[x + ((y / 8) * CONFIG_SSD1306_OLED_COLUMNS)] |= (1 << (y & 0xF));
+            s_backBuffer[offset] |= (1 << (y & 0x7));
+            break;
+
+        case FLIP_COLOR:
+            s_backBuffer[offset] ^= (1 << (y & 0x7));
             break;
 
         case BACKGROUND:
-            s_backBuffer[x + ((y / 8) * CONFIG_SSD1306_OLED_COLUMNS)] &= ~(1 << (y & 0xF));
+            s_backBuffer[offset] &= ~(1 << (y & 0x7));
             break;
         default:
             break;
