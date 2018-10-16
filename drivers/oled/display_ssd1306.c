@@ -1,5 +1,6 @@
 #include <i2c.h>
 #include <init.h>
+#include <string.h>
 
 #include "display_ssd1306.h"
 #include "config_display_ssd1306.h"
@@ -84,7 +85,7 @@ int ssd1306_send_command(struct device *dev, uint8_t data)
     uint8_t command[2];
     command[0] = 0; // No Co or DC bit: single payload byte, interpreted as a command
     command[1] = data;
-    return i2c_write(drv_data->i2c, &command, sizeof(command), CONFIG_SSD1306_I2C_ADDR);
+    return i2c_write(drv_data->i2c, &command[0], sizeof(command), CONFIG_SSD1306_I2C_ADDR);
 }
 
 int ssd1306_init(struct device *dev)
@@ -283,6 +284,8 @@ void ssd1306_draw_pixel(uint16_t x, uint16_t y, PIXEL_COLOR color)
 
         case BACKGROUND:
             s_backBuffer[x + ((y / 8) * CONFIG_SSD1306_OLED_COLUMNS)] &= ~(1 << (y & 0xF));
+            break;
+        default:
             break;
     }
 }
