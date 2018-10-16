@@ -22,10 +22,14 @@ DIYmall OLED - screen, based on SSD1306 Driver
     https://www.olimex.com/Products/Modules/LCD/MOD-OLED-128x64/resources/SSD1306.pdf
 
 ## DEPENDANCIES
-Chocolatey (Windows Only) - skip this section and run env.ps1 instead
 
-Homebrew (MacOS only) - used to install software packages
+Clone git submodules with `git submodule update --init`
 
+### Windows
+Install Chocolatey and then run `env.ps1 -init` in an admin prompt to install dependencies.
+
+### MacOS
+- Homebrew - used to install software packages
 - git - code history
 - ninja - dependancy for zephyr
 - python - dependancy for ninja
