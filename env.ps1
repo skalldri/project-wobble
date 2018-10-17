@@ -32,14 +32,15 @@ if ($init)
     . choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
     . choco install -y git python ninja dtc-msys2 gperf nuget.commandline
 
-    # install ARM GCC toolchain
+	# install ARM GCC toolchain
+	git submodule update --init
 
     # run:
     pip3 install --user -r zephyr/scripts/requirements.txt
-    # from zephyr project
+	# from zephyr project
+	
+	nuget install autom8ed.com.compilers.arm-none-eabi-gcc -OutputDirectory "$PSScriptRoot\pkg"
 }
-
-nuget install autom8ed.com.compilers.arm-none-eabi-gcc -OutputDirectory "$PSScriptRoot\pkg"
 
 $env:ZEPHYR_TOOLCHAIN_VARIANT="gccarmemb"
 $env:GCCARMEMB_TOOLCHAIN_PATH="$PSScriptRoot\pkg\autom8ed.com.compilers.arm-none-eabi-gcc.6.3.1"

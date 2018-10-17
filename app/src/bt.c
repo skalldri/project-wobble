@@ -1,12 +1,13 @@
 #include <zephyr.h>
 #include <bluetooth\bluetooth.h>
+#include <bluetooth\uuid.h>
+#include <misc\byteorder.h>
+#include "messages.h"
 #include "bt.h"
 
 //
 // Zephyr Kernel structure definitions
 //
-
-K_MSGQ_DEFINE(bluetooth_task_queue, sizeof(BLUETOOTH_TASK_MESSAGE), 10, 4);
 
 //
 // Private variable definitions
@@ -28,12 +29,12 @@ void bluetooth_task(void *arg1, void *arg2, void *arg3)
 {
     int err;
 
-    printk("Starting Bluetooth task\n");
+    printf("Starting Bluetooth task\r\n");
 
 	// Initialize the Bluetooth Subsystem
 	err = bt_enable(bt_ready);
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
+		printf("Bluetooth init failed (err %d)\r\n", err);
 	}
 
 	BLUETOOTH_TASK_MESSAGE message;
@@ -45,10 +46,15 @@ void bluetooth_task(void *arg1, void *arg2, void *arg3)
 		switch(message.command)
 		{
 			case BLUETOOTH_READY:
+				printf("Bluetooth ready\r\n");
+				break;
+
+			case BLUETOOTH_START_SCAN:
+				printf("Starting BLE Scan...\r\n");
 				start_bt_le_scan();
 				break;
 
-			case BLUETOOTH_DISCOVERY_COMPLETE:
+			case BLUETOOTH_STOP_SCAN:
 				break;
 
 			default:
@@ -64,7 +70,7 @@ void bluetooth_task(void *arg1, void *arg2, void *arg3)
 void bt_ready(int err)
 {
 	if (err) {
-		printk("Bluetooth init failed (err %d)\r\n", err);
+		printf("Bluetooth init failed (err %d)\r\n", err);
 		return;
 	}
 
@@ -77,58 +83,57 @@ void bt_ready(int err)
 		k_msgq_purge(&bluetooth_task_queue);
 	}
 
-	printk("Bluetooth initialized\n");
+	printf("Bluetooth initialized\r\n");
 }
+
+/*
+
+Steam Controller advertisement looks like this:
+
+[DEVICE]: ff:c1:22:f6:ae:dc (random), AD evt type 0, AD data len 28, RSSI -33
+        [AD]: 25 data_len 2                    -> BT_DATA_GAP_APPEARANCE
+        [AD]: 1 data_len 1					   -> BT_DATA_FLAGS
+        [AD]: 2 data_len 2					   -> BT_DATA_UUID16_SOME	
+        [AD]: UUID16 FOUND - 6162			   -> BT_UUID_HIDS
+        [AD]: 9 data_len 15					   -> BT_DATA_NAME_COMPLETE
+        [AD]: NAME FOUND - SteamController ▒D
+*/
 
 static bool bt_data_parse_callback(struct bt_data* data, void* user_data)
 {
-	//bt_addr_le_t *addr = user_data;
-	//int i;
+	BT_DEVICE *device = user_data;
 
-	printk("\t[AD]: %u data_len %u\r\n", data->type, data->data_len);
+	printf("\t[AD]: %u data_len %u\r\n", data->type, data->data_len);
 
-	switch (data->type) {
-	/*case BT_DATA_UUID16_SOME:
-	case BT_DATA_UUID16_ALL:
-		if (data->data_len % sizeof(u16_t) != 0) {
-			printk("AD malformed\n");
-			return true;
-		}
-
-		for (i = 0; i < data->data_len; i += sizeof(u16_t)) {
-			struct bt_uuid *uuid;
-			u16_t u16;
-			int err;
-
-			memcpy(&u16, &data->data[i], sizeof(u16));
-			uuid = BT_UUID_DECLARE_16(sys_le16_to_cpu(u16));
-			if (bt_uuid_cmp(uuid, BT_UUID_HRS)) {
-				continue;
+	switch (data->type) 
+	{
+		case BT_DATA_UUID16_SOME:
+		case BT_DATA_UUID16_ALL:
+			if (data->data_len % sizeof(u16_t) != 0) 
+			{
+				printf("AD malformed\r\n");
+				return true;
 			}
 
-			err = bt_le_scan_stop();
-			if (err) {
-				printk("Stop LE scan failed (err %d)\n", err);
-				continue;
+			for (int i = 0; i < data->data_len; i += sizeof(u16_t)) 
+			{
+				struct bt_uuid *uuid;
+				u16_t u16;
+				int err;
+
+				memcpy(&u16, &data->data[i], sizeof(u16));
+				u16 = sys_le16_to_cpu(u16);
+				uuid = BT_UUID_DECLARE_16(u16);
+
+				printf("\t[AD]: UUID16 FOUND - %u\r\n", u16);
 			}
+			break;
 
-			default_conn = bt_conn_create_le(addr,
-							 BT_LE_CONN_PARAM_DEFAULT);
-			return false;
-		}
-		break;
-		*/
-	case BT_DATA_NAME_COMPLETE:
-	case BT_DATA_NAME_SHORTENED:
-	{	
-		#define NAME_LEN 30
-
-		char name[NAME_LEN];
-		memcpy(name, data->data, min(data->data_len, NAME_LEN - 1));
-		printk("\t[AD]: NAME FOUND - %s\r\n", name);
-		break;
-	}
-		
+		case BT_DATA_NAME_COMPLETE:
+		case BT_DATA_NAME_SHORTENED:	
+			memcpy(device->name, data->data, min(data->data_len, BT_MAX_NAME_LEN - 1));
+			printf("\t[AD]: NAME FOUND - %s\r\n", device->name);
+			break;		
 	}
 
 	return true;
@@ -139,7 +144,7 @@ static void bt_le_scan_callback(const bt_addr_le_t* addr, int8_t rssi, uint8_t a
 	char dev[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(addr, dev, sizeof(dev));
-	printk("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\r\n",
+	printf("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\r\n",
 	       dev, adv_type, buf->len, rssi);
 
 	/* We're only interested in connectable events */
@@ -155,10 +160,10 @@ void start_bt_le_scan()
 
 	if (err == 0)
 	{
-		printk("Bluetooth device discovery started\r\n");
+		printf("Bluetooth device discovery started\r\n");
 	}
 	else
 	{
-		printk("Bluetooth device discovery failed to start: err %d\r\n", err);
+		printf("Bluetooth device discovery failed to start: err %d\r\n", err);
 	}
 }

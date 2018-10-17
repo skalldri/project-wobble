@@ -119,77 +119,77 @@ int ssd1306_init(struct device *dev)
     uint32_t config = I2C_SPEED_SET(I2C_SPEED_FAST);
     i2c_configure(drv_data->i2c, config);
 
-    int ssd1306_status = 0;
+    int status = 0;
 
     // Start powering up the display. Run through the init sequence
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_DISPLAYOFF);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_DISPLAYOFF);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETDISPLAYCLOCKDIV);
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x80);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETDISPLAYCLOCKDIV);
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x80);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETMULTIPLEX);
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, CONFIG_SSD1306_OLED_ROWS - 1);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETMULTIPLEX);
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, CONFIG_SSD1306_OLED_ROWS - 1);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETDISPLAYOFFSET);
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x0);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETDISPLAYOFFSET);
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x0);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETSTARTLINE | 0x0);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETSTARTLINE | 0x0);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_CHARGEPUMP);
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x14); // Turn on the internal charge pump to generate the OLED drive voltage
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_CHARGEPUMP);
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x14); // Turn on the internal charge pump to generate the OLED drive voltage
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_MEMORYMODE);                    // 0x20
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x00);                                  // 0x0 act like ks0108
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_MEMORYMODE);                    // 0x20
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x00);                                  // 0x0 act like ks0108
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SEGREMAP | 0x1);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SEGREMAP | 0x1);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_COMSCANDEC);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_COMSCANDEC);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETCOMPINS);                    // 0xDA
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x12);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETCOMPINS);                    // 0xDA
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x12);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETCONTRAST);                   // 0x81
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0xCF);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETCONTRAST);                   // 0x81
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0xCF);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETPRECHARGE);                  // 0xd9
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0xF1);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETPRECHARGE);                  // 0xd9
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0xF1);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_SETVCOMDETECT);                 // 0xDB
-    if (ssd1306_status != 0) { goto Exit; }
-    ssd1306_status = ssd1306_send_command(dev, 0x40);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_SETVCOMDETECT);                 // 0xDB
+    if (status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, 0x40);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_DISPLAYALLON_RESUME);           // 0xA4
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_DISPLAYALLON_RESUME);           // 0xA4
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_NORMALDISPLAY);                 // 0xA6
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_NORMALDISPLAY);                 // 0xA6
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_DEACTIVATE_SCROLL);
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_DEACTIVATE_SCROLL);
+    if (status != 0) { goto Exit; }
 
-    ssd1306_status = ssd1306_send_command(dev, SSD1306_DISPLAYON); //--turn on oled panel
-    if (ssd1306_status != 0) { goto Exit; }
+    status = ssd1306_send_command(dev, SSD1306_DISPLAYON); //--turn on oled panel
+    if (status != 0) { goto Exit; }
 
     /* device_get_binding checks if driver_api is not zero before checking
 	 * device name.
@@ -199,12 +199,12 @@ int ssd1306_init(struct device *dev)
 	dev->driver_api = (void *)1;
 
 Exit:
-    if (ssd1306_status != 0)
+    if (status != 0)
     {
-        SYS_LOG_ERR("SSD1306 failed to initialize, error %d", ssd1306_status);
+        SYS_LOG_ERR("SSD1306 failed to initialize, error %d", status);
     }
 
-    return ssd1306_status;
+    return status;
 }
 
 // Update the contents of a subregion of the back buffer on the display

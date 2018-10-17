@@ -1,17 +1,24 @@
 #pragma once
 
-#define BT_DISCOVERY_MAX_DEVICES 10
+#include <bluetooth\bluetooth.h>
+#include <bluetooth\uuid.h>
+
+//
+// Defines
+//
+#define BT_MAX_NAME_LEN 30
+
+//
+// Typedefs
+//
 
 typedef struct {
-    uint8_t command;
-} BLUETOOTH_TASK_MESSAGE;
+    char                name[BT_MAX_NAME_LEN];
+    bt_addr_le_t        address;
+} BT_DEVICE;
 
-enum {
-    BLUETOOTH_READY,
-    BLUETOOTH_DISCOVERY_COMPLETE,
-
-    // !!! INSERT NEW COMMANDS ABOVE THIS LINE !!!
-    BLUETOOTH_TASK_COMMAND_COUNT
-} BLUETOOTH_TASK_COMMAND;
+//
+// Public function definitions
+//
 
 void bluetooth_task(void *arg1, void *arg2, void *arg3);

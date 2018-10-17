@@ -145,13 +145,16 @@ int mpu9250_init(struct device *dev)
 {
 	struct mpu9250_data *drv_data = dev->driver_data;
 	u8_t id, i;
+	int status = 0;
 
 	drv_data->i2c = device_get_binding(CONFIG_MPU9250_I2C_MASTER_DEV_NAME); // This is the name of the bus in ninja config menu - kconfig (SPI_1)
 	// we didn't find the bus to talk to the chip, fail
 	if (drv_data->i2c == NULL) {
 		SYS_LOG_ERR("Failed to get pointer to %s device",
 			    CONFIG_MPU9250_I2C_MASTER_DEV_NAME);
-		return -EINVAL;
+					
+		status = -EINVAL;
+		goto Exit;
 	}
 
 	/* check chip ID
@@ -160,13 +163,15 @@ int mpu9250_init(struct device *dev)
 	if (i2c_reg_read_byte(drv_data->i2c, CONFIG_MPU9250_I2C_ADDR,
 			      MPU9250_REG_CHIP_ID, &id) < 0) {
 		SYS_LOG_ERR("Failed to read chip ID.");
-		return -EIO;
+		status = -EIO;
+		goto Exit;
 	}
 
 	// bail if wrong chip id
 	if (id != MPU9250_CHIP_ID) {
 		SYS_LOG_ERR("Invalid chip ID.");
-		return -EINVAL;
+		status = -EINVAL;
+		goto Exit;
 	}
 
 	/* wake up chip
@@ -176,7 +181,8 @@ int mpu9250_init(struct device *dev)
 				MPU9250_REG_PWR_MGMT1, MPU9250_SLEEP_EN,
 				0) < 0) {
 		SYS_LOG_ERR("Failed to wake up chip.");
-		return -EIO;
+		status = -EIO;
+		goto Exit;
 	}
 
 	/* set accelerometer full-scale range */
@@ -188,14 +194,16 @@ int mpu9250_init(struct device *dev)
 
 	if (i == 4) {
 		SYS_LOG_ERR("Invalid value for accel full-scale range.");
-		return -EINVAL;
+		status = -EINVAL;
+		goto Exit;
 	}
 
 	if (i2c_reg_write_byte(drv_data->i2c, CONFIG_MPU9250_I2C_ADDR,
 			       MPU9250_REG_ACCEL_CFG,
 			       i << MPU9250_ACCEL_FS_SHIFT) < 0) {
 		SYS_LOG_ERR("Failed to write accel full-scale range.");
-		return -EIO;
+		status = -EIO;
+		goto Exit;
 	}
 
 	drv_data->accel_sensitivity_shift = 14 - i; //idk
@@ -209,14 +217,16 @@ int mpu9250_init(struct device *dev)
 
 	if (i == 4) {
 		SYS_LOG_ERR("Invalid value for gyro full-scale range.");
-		return -EINVAL;
+		status = -EINVAL;
+		goto Exit;
 	}
 
 	if (i2c_reg_write_byte(drv_data->i2c, CONFIG_MPU9250_I2C_ADDR,
 			       MPU9250_REG_GYRO_CFG,
 			       i << MPU9250_GYRO_FS_SHIFT) < 0) {
 		SYS_LOG_ERR("Failed to write gyro full-scale range.");
-		return -EIO;
+		status = -EIO;
+		goto Exit;
 	}
 
 	drv_data->gyro_sensitivity_x10 = mpu9250_gyro_sensitivity_x10[i];
@@ -224,11 +234,21 @@ int mpu9250_init(struct device *dev)
 #ifdef CONFIG_MPU9250_TRIGGER //important
 	if (mpu9250_init_interrupt(dev) < 0) {
 		SYS_LOG_DBG("Failed to initialize interrupts.");
-		return -EIO;
+		status = -EIO;
+		goto Exit;
 	}
 #endif
 
-	return 0;
+Exit:
+	if (status != 0)
+	{
+		// NULL out the driver API if an error occurred. This causes Zephyr 
+		// to exclude the device when the app calls device_get_binding(), 
+		// so the app knows the device isn't available.
+		dev->driver_api = NULL;
+	}
+
+	return status;
 }
 
 struct mpu9250_data mpu9250_driver;
