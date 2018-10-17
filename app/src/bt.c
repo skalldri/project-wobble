@@ -141,15 +141,18 @@ static bool bt_data_parse_callback(struct bt_data* data, void* user_data)
 
 static void bt_le_scan_callback(const bt_addr_le_t* addr, int8_t rssi, uint8_t adv_type, struct net_buf_simple* buf)
 {
-	char dev[BT_ADDR_LE_STR_LEN];
+	char addr_str[BT_ADDR_LE_STR_LEN];
+	BT_DEVICE device;
 
-	bt_addr_le_to_str(addr, dev, sizeof(dev));
+	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+
 	printf("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\r\n",
-	       dev, adv_type, buf->len, rssi);
+	       addr_str, adv_type, buf->len, rssi);
 
 	/* We're only interested in connectable events */
-	if (adv_type == BT_LE_ADV_IND || adv_type == BT_LE_ADV_DIRECT_IND) {
-		bt_data_parse(buf, bt_data_parse_callback, (void *)addr);
+	if (adv_type == BT_LE_ADV_IND || adv_type == BT_LE_ADV_DIRECT_IND) 
+	{
+		bt_data_parse(buf, bt_data_parse_callback, (void *)&device);
 	}
 }
 
