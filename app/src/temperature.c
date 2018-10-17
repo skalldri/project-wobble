@@ -41,7 +41,7 @@ void temperature_task(void *arg1, void *arg2, void *arg3)
 			break;
 		}
 
-		printf("Temperature is %gC\r\n", sensor_value_to_double(&temp_value));
+		//printf("Temperature is %gC\r\n", sensor_value_to_double(&temp_value));
 
 		k_sleep(1000);
 	}

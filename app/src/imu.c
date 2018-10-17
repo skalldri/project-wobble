@@ -19,7 +19,7 @@ void imu_task(void *arg1, void *arg2, void *arg3)
 
 	i2c_dev = device_get_binding(CONFIG_MPU9250_NAME); //pointer to a device
 	if (!i2c_dev) {
-		printf("I2C: Device driver not found.\r\n");
+		printf("ERROR: IMU Device driver not found.\r\n");
 		return;
 	}
 
@@ -27,14 +27,14 @@ void imu_task(void *arg1, void *arg2, void *arg3)
 		sensor_sample_fetch(i2c_dev); // gets next sample from driver
 
 		sensor_channel_get(i2c_dev, SENSOR_CHAN_ACCEL_XYZ, sensor_values);
-		printf("accel x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
+		/*printf("accel x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
 		printf("accel y: %e\r\n", sensor_value_to_double(&sensor_values[1]));
-		printf("accel z: %e\r\n", sensor_value_to_double(&sensor_values[2]));
+		printf("accel z: %e\r\n", sensor_value_to_double(&sensor_values[2]));*/
 
 		sensor_channel_get(i2c_dev, SENSOR_CHAN_GYRO_XYZ, sensor_values);
-		printf("gyro x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
+		/*printf("gyro x: %e\r\n", sensor_value_to_double(&sensor_values[0]));
 		printf("gyro y: %e\r\n", sensor_value_to_double(&sensor_values[1]));
-		printf("gyro z: %e\r\n", sensor_value_to_double(&sensor_values[2]));
+		printf("gyro z: %e\r\n", sensor_value_to_double(&sensor_values[2]));*/
 
 		k_sleep(10);
 	}
