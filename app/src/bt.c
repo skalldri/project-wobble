@@ -9,6 +9,7 @@
 
 // Application includes
 #include "messages.h"
+#include "hog_parser.h"
 #include "bt.h"
 
 //
@@ -29,6 +30,9 @@ static u8_t gatt_notify_cb(struct bt_conn *conn,
 static u8_t gatt_discover_cb(struct bt_conn *conn,
 			     const struct bt_gatt_attr *attr,
 			     struct bt_gatt_discover_params *params);
+static u8_t gatt_read_cb(struct bt_conn *conn, u8_t err,
+			 struct bt_gatt_read_params *params,
+			 const void *data, u16_t length);
 
 //
 // Public variable declarations
@@ -49,6 +53,11 @@ static struct bt_conn *default_conn;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 static struct bt_gatt_discover_params discover_params;
 static struct bt_gatt_subscribe_params subscribe_params;
+static struct bt_gatt_read_params read_params;
+
+#define HOGP_TASK_STACK_SIZE (2048)
+K_THREAD_STACK_DEFINE(hogp_task_stack, HOGP_TASK_STACK_SIZE);
+static struct k_thread hogp_data;
 
 //
 // Public function declarations
@@ -296,8 +305,21 @@ static void device_connected(struct bt_conn *conn, u8_t err)
 
 	printf("Connected: %s\r\n", addr);
 
+	// Create the HOG Parser task to go and perform the parsing of this device's
+	// HID-over-GATT profile (if it exists...)
+	k_thread_create(&hogp_data, 						
+					hogp_task_stack,						// Data buffer for thread stack
+					HOGP_TASK_STACK_SIZE,			    	// Thread stack size 
+					(k_thread_entry_t) hog_parser_task,   	// Thread function
+					default_conn, 							// Parameter 1
+					NULL, 									// Parameter 2
+					NULL, 									// Parameter 3
+					K_PRIO_COOP(7),							// Thread priority 
+					0, 										// Thread options
+					K_NO_WAIT);								// Scheduling delay
+
 	// Discover HID services on the connected device
-	memcpy(&uuid, BT_UUID_HIDS, sizeof(uuid));
+	/*memcpy(&uuid, BT_UUID_HIDS, sizeof(uuid));
 		discover_params.uuid = &uuid.uuid;
 		discover_params.func = gatt_discover_cb;
 		discover_params.start_handle = 0x0001;
@@ -307,7 +329,7 @@ static void device_connected(struct bt_conn *conn, u8_t err)
 	int status = bt_gatt_discover(default_conn, &discover_params);
 	if (status) {
 		printk("Discover failed (err %d)\r\n", status);
-	}
+	}*/
 }
 
 static void device_disconnected(struct bt_conn *conn, u8_t reason)
@@ -342,6 +364,26 @@ static u8_t gatt_notify_cb(struct bt_conn *conn,
 	return BT_GATT_ITER_CONTINUE;
 }
 */
+/*
+static u8_t gatt_read_cb(struct bt_conn *conn, u8_t err,
+			 struct bt_gatt_read_params *params,
+			 const void *data, u16_t length)
+{
+	printf("Read complete: err %u length %u\n", err, length);
+
+	if (!data) {
+		memset(params, 0, sizeof(*params));
+		return BT_GATT_ITER_STOP;
+	}
+
+	gatt_char_decl_attr* attr = (gatt_char_decl_attr*) data;
+
+	read_params()
+
+	bt_gatt_read(conn, &read_params);
+
+	return BT_GATT_ITER_CONTINUE;
+}*/
 
 static u8_t gatt_discover_cb(struct bt_conn *conn,
 			     const struct bt_gatt_attr *attr,
@@ -376,8 +418,14 @@ static u8_t gatt_discover_cb(struct bt_conn *conn,
 	{
 		// Second level of parsing: we found the BT_UUID_HIDS_REPORT_MAP,
 		// characteristic, which contains the HID report descriptor
+		/*read_params.func = gatt_read_cb;
+		read_params.handle_count = 1;
+		read_params.single.handle = attr->handle;
+		read_params.single.offset = 0;
+		
+		bt_gatt_read(conn, &read_params);*/
 
-		memcpy(&uuid, BT_UUID_GATT_CCC, sizeof(uuid));
+		/*memcpy(&uuid, BT_UUID_GATT_CCC, sizeof(uuid));
 		discover_params.uuid = &uuid.uuid;
 		discover_params.start_handle = attr->handle + 2;
 		discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
@@ -386,7 +434,8 @@ static u8_t gatt_discover_cb(struct bt_conn *conn,
 		err = bt_gatt_discover(conn, &discover_params);
 		if (err) {
 			printk("Discover failed (err %d)\n", err);
-		}
+		}*/
+
 	}/* else {
 		subscribe_params.notify = notify_func;
 		subscribe_params.value = BT_GATT_CCC_NOTIFY;

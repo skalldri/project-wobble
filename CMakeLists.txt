@@ -8,6 +8,7 @@ target_sources(app PRIVATE
     app/src/temperature.c
     app/src/ui.c
     app/src/bt.c
+    app/src/hog_parser.c
     app/src/messages.c
     drivers/sensor/mpu9250/mpu9250.c
     drivers/oled/display_ssd1306.c

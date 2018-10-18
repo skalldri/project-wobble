@@ -3,6 +3,8 @@
 #include <bluetooth\bluetooth.h>
 #include <bluetooth\uuid.h>
 
+#include <assert.h>
+
 //
 // Defines
 //
