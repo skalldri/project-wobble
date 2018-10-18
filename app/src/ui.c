@@ -24,6 +24,8 @@
 void refresh_display();
 void refresh_display_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 void draw_bitmap(uint8_t x_pos, uint8_t y_pos, uint8_t* buffer, uint8_t width, uint8_t height);
+void display_bt_device_list();
+BT_DEVICE* get_first_bt_device();
 
 // A simple bitmap of a smiley face
 static uint8_t s_smileyBitmap[] = {
@@ -75,7 +77,16 @@ void button_callback(struct device *port, struct gpio_callback *cb, u32_t pins)
     
     if ((pins & BIT(SW1_GPIO_PIN)) == BIT(SW1_GPIO_PIN))
     {
-        printf("Button 1 pressed\r\n");
+        printf("Sending UI select\r\n");
+
+        UI_TASK_MESSAGE message;
+        message.command = UI_SELECT;
+
+        while (k_msgq_put(&ui_task_queue, &message, K_NO_WAIT) != 0) 
+        {
+            // message queue is full: purge old data & try again
+            k_msgq_purge(&ui_task_queue);
+        }
     }
 
     if ((pins & BIT(SW2_GPIO_PIN)) == BIT(SW2_GPIO_PIN))
@@ -129,23 +140,75 @@ void ui_task(void *arg1, void *arg2, void *arg3)
 
     int x = 0, y = 0;
     int dirx = 1, diry = 1;
+    int status;
+    UI_TASK_MESSAGE ui_message;
+    BLUETOOTH_TASK_MESSAGE bt_message;
+    BT_DEVICE* bt_device;
+
     while(true)
     {
+        status = k_msgq_get(&ui_task_queue, &ui_message, 30);
+
+        // If status == 0, message was received. Else, no message.
+        if (status == 0)
+        {
+            switch ((UI_TASK_COMMAND) ui_message.command)
+            {
+                case UI_BT_DEVICE_LIST_UPDATED:
+                    display_bt_device_list();
+                    break;
+
+                // TODO: replace with real menu system
+                case UI_SELECT:
+                    bt_device = get_first_bt_device();
+
+                    if (!bt_device)
+                    {
+                        break;
+                    }
+
+                    printf("Sending BT pair command\r\n");
+
+                    bt_message.command = BLUETOOTH_PAIR_DEVICE;
+                    bt_message.device = bt_device;
+
+                    while (k_msgq_put(&bluetooth_task_queue, &bt_message, K_NO_WAIT) != 0) 
+                    {
+                        // message queue is full: purge old data & try again
+                        k_msgq_purge(&bluetooth_task_queue);
+                    }
+                    break;
+
+                default:
+                    __ASSERT(false, "Unknown command received by UI task\r\n");
+                    break;
+            }
+        }
+
+        // Code runs every loop
+
         ssd1306_draw_pixel(x, y, FLIP_COLOR);
         //ssd1306_clear_backbuffer();
         //draw_bitmap(x, y, s_smileyBitmap, 16, 16);
         //refresh_display(oled_dev);
         refresh_display_region(x, y, 1, 1);
+
         if (x + dirx < 0 || x + dirx >= CONFIG_SSD1306_OLED_COLUMNS - 1)
         {
             dirx *= -1;
-        } else x += dirx;
+        } 
+        else 
+        {
+            x += dirx;
+        }
         if (y + diry < 0 || y + diry >= CONFIG_SSD1306_OLED_ROWS - 1)
         {
             diry *= -1;
-        } else y += diry;
-
-        k_sleep(100);
+        }
+        else 
+        {
+            y += diry;
+        }
     }
 }
 
@@ -204,4 +267,48 @@ void refresh_display_region(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
         ssd1306_refresh_region(oled_dev, x, y, width, height);
     }
     k_sched_unlock();
+}
+
+void display_bt_device_list()
+{
+    printf("----  BT DEVICE LIST ----\r\n");
+    
+    take_device_list_lock();
+    {
+        for (uint32_t i = 0; i < ARRAY_SIZE(g_device_list.devices); i++)
+        {
+            // Only print valid device slots
+            if (g_device_list.devices[i].is_valid == true)
+            {
+                char bt_addr_str[BT_ADDR_LE_STR_LEN];
+                bt_addr_le_to_str(&g_device_list.devices[i].address, bt_addr_str, BT_ADDR_LE_STR_LEN);
+
+                printf("%d - %s - %s\r\n", i, g_device_list.devices[i].name, bt_addr_str);
+            }
+        }
+    }
+    release_device_list_lock();
+
+    printf("-------------------------\r\n");
+}
+
+BT_DEVICE* get_first_bt_device()
+{
+    BT_DEVICE* device = NULL;
+
+    take_device_list_lock();
+    {
+        for (uint32_t i = 0; i < ARRAY_SIZE(g_device_list.devices); i++)
+        {
+            // Only print valid device slots
+            if (g_device_list.devices[i].is_valid == true)
+            {
+                device = &g_device_list.devices[i];
+                break;
+            }
+        }
+    }
+    release_device_list_lock();
+
+    return device;
 }
