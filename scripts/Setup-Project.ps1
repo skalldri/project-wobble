@@ -1,1 +1,1 @@
-cmake -GNinja -DBOARD=nrf52_pca10040 ..\app
+cmake -GNinja -DBOARD=nrf52_pca10040 ..
