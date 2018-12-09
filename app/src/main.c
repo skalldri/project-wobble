@@ -41,7 +41,7 @@ void main(void)
 					NULL, 									// Parameter 1
 					NULL, 									// Parameter 2
 					NULL, 									// Parameter 3
-					K_PRIO_COOP(7),							// Thread priority 
+					K_PRIO_PREEMPT(7),					    // Thread priority 
 					0, 										// Thread options
 					K_NO_WAIT);								// Scheduling delay
 
@@ -52,10 +52,11 @@ void main(void)
 					NULL, 									// Parameter 1
 					NULL, 									// Parameter 2
 					NULL, 									// Parameter 3
-					K_PRIO_COOP(7),							// Thread priority 
+					K_PRIO_COOP(1),							// Thread priority 
 					0, 										// Thread options
 					K_NO_WAIT);								// Scheduling delay
 
+/*
 	k_thread_create(&ui_data, 						
 					ui_task_stack,							// Data buffer for thread stack
 					UI_TASK_STACK_SIZE,						// Thread stack size 
@@ -66,7 +67,8 @@ void main(void)
 					K_PRIO_COOP(7),							// Thread priority 
 					0, 										// Thread options
 					K_NO_WAIT);								// Scheduling delay
-	
+*/
+
 	k_thread_create(&bluetooth_data, 						
 					bluetooth_task_stack,					// Data buffer for thread stack
 					BLUETOOTH_TASK_STACK_SIZE,			    // Thread stack size 
@@ -74,7 +76,8 @@ void main(void)
 					NULL, 									// Parameter 1
 					NULL, 									// Parameter 2
 					NULL, 									// Parameter 3
-					K_PRIO_COOP(7),							// Thread priority 
+					K_PRIO_PREEMPT(7),					    // Thread priority 
 					0, 										// Thread options
 					K_NO_WAIT);								// Scheduling delay
+
 }

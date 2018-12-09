@@ -231,6 +231,15 @@ int mpu9250_init(struct device *dev)
 
 	drv_data->gyro_sensitivity_x10 = mpu9250_gyro_sensitivity_x10[i];
 
+	/*set digital low-pass filter configuration*/
+	if (i2c_reg_write_byte(drv_data->i2c, CONFIG_MPU9250_I2C_ADDR,
+			       MPU9250_REG_SYS_CFG,
+			       CONFIG_MPU9250_DPLF_MODE << MPU9250_DPLF_CFG_SHIFT) < 0) {
+		SYS_LOG_ERR("Failed to write DPLF configuration.");
+		status = -EIO;
+		goto Exit;
+	}
+
 #ifdef CONFIG_MPU9250_TRIGGER //important
 	if (mpu9250_init_interrupt(dev) < 0) {
 		SYS_LOG_DBG("Failed to initialize interrupts.");

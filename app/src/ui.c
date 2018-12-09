@@ -77,6 +77,11 @@ void button_callback(struct device *port, struct gpio_callback *cb, u32_t pins)
     
     if ((pins & BIT(SW1_GPIO_PIN)) == BIT(SW1_GPIO_PIN))
     {
+        printf("Button 1 pressed\r\n");
+    }
+
+    if ((pins & BIT(SW2_GPIO_PIN)) == BIT(SW2_GPIO_PIN))
+    {
         printf("Sending UI select\r\n");
 
         UI_TASK_MESSAGE message;
@@ -87,11 +92,6 @@ void button_callback(struct device *port, struct gpio_callback *cb, u32_t pins)
             // message queue is full: purge old data & try again
             k_msgq_purge(&ui_task_queue);
         }
-    }
-
-    if ((pins & BIT(SW2_GPIO_PIN)) == BIT(SW2_GPIO_PIN))
-    {
-        printf("Button 2 pressed\r\n");
     }
 
     if ((pins & BIT(SW3_GPIO_PIN)) == BIT(SW3_GPIO_PIN))
@@ -121,7 +121,10 @@ void ui_task(void *arg1, void *arg2, void *arg3)
     // Configure buttons for the UI
     // TODO: check for configuration errors
     gpio_pin_configure(gpio_dev, SW0_GPIO_PIN, SW0_GPIO_PIN_PUD | GPIO_DIR_IN | GPIO_INT | GPIO_INT_ACTIVE_LOW | GPIO_INT_EDGE);
-    gpio_pin_configure(gpio_dev, SW1_GPIO_PIN, SW1_GPIO_PIN_PUD | GPIO_DIR_IN | GPIO_INT | GPIO_INT_ACTIVE_LOW | GPIO_INT_EDGE);
+    
+    // Pin14 is used by the stepper motor control. Do no enable.
+    //gpio_pin_configure(gpio_dev, SW1_GPIO_PIN, SW1_GPIO_PIN_PUD | GPIO_DIR_IN | GPIO_INT | GPIO_INT_ACTIVE_LOW | GPIO_INT_EDGE);
+
     gpio_pin_configure(gpio_dev, SW2_GPIO_PIN, SW2_GPIO_PIN_PUD | GPIO_DIR_IN | GPIO_INT | GPIO_INT_ACTIVE_LOW | GPIO_INT_EDGE);
     gpio_pin_configure(gpio_dev, SW3_GPIO_PIN, SW3_GPIO_PIN_PUD | GPIO_DIR_IN | GPIO_INT | GPIO_INT_ACTIVE_LOW | GPIO_INT_EDGE);
 
@@ -129,7 +132,9 @@ void ui_task(void *arg1, void *arg2, void *arg3)
     gpio_add_callback(gpio_dev, &sw_callback);
 
     gpio_pin_enable_callback(gpio_dev, SW0_GPIO_PIN);
-    gpio_pin_enable_callback(gpio_dev, SW1_GPIO_PIN);
+
+    //gpio_pin_enable_callback(gpio_dev, SW1_GPIO_PIN);
+
     gpio_pin_enable_callback(gpio_dev, SW2_GPIO_PIN);
     gpio_pin_enable_callback(gpio_dev, SW3_GPIO_PIN);
 

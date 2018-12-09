@@ -10,6 +10,8 @@
 #include <gpio.h>
 #include <stdio.h>
 
+//#define INTERRUPT_DRIVEN
+
 // This enum is used to track the current state of a timer pulse generator.
 // While extremely simple, it's useful for keeping track of the current state of the 
 // pulse generator.
@@ -33,6 +35,7 @@ struct drv8825_data {
     uint32_t            m0_pin;
     uint32_t            m1_pin;
     uint32_t            m2_pin;
+    uint8_t             microstepping;
 
     // PPI channels for STEP pin control
     nrf_ppi_channel_t   ppi_channel_a;
@@ -45,12 +48,13 @@ struct drv8825_data {
 };
 
 struct drv8825_data drv8825_0_driver = {
-    .timer = NRF_TIMER0,
+    .timer = NRF_TIMER3,
     .step_pin = CONFIG_DRV8825_0_STEP_PIN,
     .dir_pin = CONFIG_DRV8825_0_DIR_PIN,
     .m0_pin = CONFIG_DRV8825_0_M0_PIN,
     .m1_pin = CONFIG_DRV8825_0_M1_PIN,
     .m2_pin = CONFIG_DRV8825_0_M2_PIN,
+    .microstepping = CONFIG_DRV8825_0_MICROSTEP,
     .ppi_channel_a = NRF_PPI_CHANNEL0,
     .ppi_channel_b = NRF_PPI_CHANNEL1,
     .gpiote_channel = 0,
@@ -59,12 +63,13 @@ struct drv8825_data drv8825_0_driver = {
 };
 
 struct drv8825_data drv8825_1_driver = {
-    .timer = NRF_TIMER1,
+    .timer = NRF_TIMER4,
     .step_pin = CONFIG_DRV8825_1_STEP_PIN,
     .dir_pin = CONFIG_DRV8825_1_DIR_PIN,
     .m0_pin = CONFIG_DRV8825_1_M0_PIN,
     .m1_pin = CONFIG_DRV8825_1_M1_PIN,
     .m2_pin = CONFIG_DRV8825_1_M2_PIN,
+    .microstepping = CONFIG_DRV8825_1_MICROSTEP,
     .ppi_channel_a = NRF_PPI_CHANNEL2,
     .ppi_channel_b = NRF_PPI_CHANNEL3,
     .gpiote_channel = 1,
@@ -79,8 +84,8 @@ int drv8825_program_timer(struct device *dev);
 void drv8825_irq_handler(struct drv8825_data *drv_data)
 {
     // Stop the timer
-    nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_STOP);
-    nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_CLEAR);
+    /*nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_STOP);
+    nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_CLEAR);*/
 
     switch(drv_data->state)
     {
@@ -91,7 +96,7 @@ void drv8825_irq_handler(struct drv8825_data *drv_data)
 
             // Reconfigure the timer to re-trigger this IRQ
             // after the OFF duration
-            nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_off);
+            //nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_off);
 
             // Switch to the OFF state
             drv_data->state = PULSE_STATE_PULSE_OFF;
@@ -104,7 +109,7 @@ void drv8825_irq_handler(struct drv8825_data *drv_data)
 
             // Reconfigure the timer to re-trigger this IRQ
             // after the OFF duration
-            nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_on);
+            //nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_on);
 
             // Switch to the OFF state
             drv_data->state = PULSE_STATE_PULSE_ON;
@@ -115,7 +120,7 @@ void drv8825_irq_handler(struct drv8825_data *drv_data)
     }
 
     // Restart the timer now that it has been reprogrammed
-    nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_START);
+    /*nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_START);*/
 }
 
 ISR_DIRECT_DECLARE(timer0_irq)
@@ -138,17 +143,75 @@ int drv8825_init(struct device *dev)
 {
     struct drv8825_data *drv_data = dev->driver_data;
 
+#if defined(INTERRUPT_DRIVEN)
     // Setup static structures needed for all driver instances
     IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER0), TIMER_IRQ_PRIORITY, timer0_irq, 0);
     IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER1), TIMER_IRQ_PRIORITY, timer1_irq, 0);
 
     irq_enable(NRFX_IRQ_NUMBER_GET(drv_data->timer));
+#endif
 
     drv_data->gpio_dev = device_get_binding(CONFIG_GPIO_DEV);
     if (!drv_data->gpio_dev) 
     {
         printf("ERROR: GPIO device driver not found.\r\n");
         return -ENODEV;
+    }
+
+    // TODO: init GPIO pins to enable microstepping mode
+    // TODO: what is the correct microstepping mode? 1/2 step? 1/4 step?
+    gpio_pin_configure(drv_data->gpio_dev, drv_data->step_pin, GPIO_DIR_OUT);
+    gpio_pin_configure(drv_data->gpio_dev, drv_data->dir_pin, GPIO_DIR_OUT);
+    gpio_pin_configure(drv_data->gpio_dev, drv_data->m0_pin, GPIO_DIR_OUT);
+    gpio_pin_configure(drv_data->gpio_dev, drv_data->m1_pin, GPIO_DIR_OUT);
+    gpio_pin_configure(drv_data->gpio_dev, drv_data->m2_pin, GPIO_DIR_OUT);
+
+    if (drv_data->microstepping > 0)
+    {
+        // Full step on each step pin output
+        if (drv_data->microstepping == 1)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 0);
+        }
+        // 1/2 Step on each step pin output
+        else if(drv_data->microstepping == 2)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 1);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 0);
+        }
+        // 1/4 Step on each step pin output
+        else if(drv_data->microstepping == 4)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 1);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 0);
+        }
+        else if(drv_data->microstepping == 8)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 1);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 1);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 0);
+        }
+        else if(drv_data->microstepping == 16)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 1);
+        }
+        else if(drv_data->microstepping == 32)
+        {
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m0_pin, 1);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m1_pin, 0);
+            gpio_pin_write(drv_data->gpio_dev, drv_data->m2_pin, 1);
+        }
+        else
+        {   
+            printf("ERROR: Invalid microstepping configuration.\r\n");
+            return -ENODEV;
+        }
     }
     
     // Configure timers to run in TIMER mode
@@ -160,42 +223,48 @@ int drv8825_init(struct device *dev)
     // Configure timer to run at 62500 Hz
     nrf_timer_frequency_set(drv_data->timer, TIMER_FREQUENCY);
 
+#if defined(INTERRUPT_DRIVEN)
+    // Configure timer interrupts on CC[0] (we only need one CC register)
+    nrf_timer_int_enable(drv_data->timer, NRF_TIMER_INT_COMPARE0_MASK);
+    nrf_timer_int_enable(drv_data->timer, NRF_TIMER_INT_COMPARE1_MASK);
+#else
     // Reset the timer when CC1 is triggered
-    nrf_timer_shorts_enable(drv_data->timer, NRF_TIMER_SHORT_COMPARE1_CLEAR_MASK);
+    //nrf_timer_shorts_enable(drv_data->timer, NRF_TIMER_SHORT_COMPARE1_CLEAR_MASK);
 
     // When CC0 is triggered, turn off the STEP GPIO
     nrf_ppi_channel_endpoint_setup(
         drv_data->ppi_channel_a,
-        nrf_timer_event_address_get(drv_data->timer, NRF_TIMER_EVENT_COMPARE0),
+        (uint32_t) nrf_timer_event_address_get(drv_data->timer, NRF_TIMER_EVENT_COMPARE0),
         nrf_gpiote_task_addr_get(drv_data->gpiote_clr_task));
 
     // When CC1 is triggered, turn on the STEP GPIO
     nrf_ppi_channel_endpoint_setup(
-        drv_data->ppi_channel_a,
-        nrf_timer_event_address_get(drv_data->timer, NRF_TIMER_EVENT_COMPARE1),
+        drv_data->ppi_channel_b,
+        (uint32_t) nrf_timer_event_address_get(drv_data->timer, NRF_TIMER_EVENT_COMPARE1),
         nrf_gpiote_task_addr_get(drv_data->gpiote_set_task));
+
+    // And also reset the timer
+    nrf_ppi_fork_endpoint_setup(
+        drv_data->ppi_channel_b,
+        (uint32_t) nrf_timer_task_address_get(drv_data->timer, NRF_TIMER_TASK_CLEAR));
 
     // Configure the GPIOTE channel to change the correct GPIO pin
     // The last argument is the action GPIOTE should take when it receives
     // the "OUT" task. Since we don't use the OUT task, this value doesn't matter.
-    nrf_gpiote_event_configure(drv_data->gpiote_channel, drv_data->step_pin, NRF_GPIOTE_POLARITY_TOGGLE);
+    nrf_gpiote_task_configure(
+        drv_data->gpiote_channel,
+        drv_data->step_pin,
+        NRF_GPIOTE_POLARITY_HITOLO,
+        NRF_GPIOTE_INITIAL_VALUE_LOW);
 
     // Claim the GPIO pin specified in nrf_gpiote_event_configure() for use by the GPIOTE module.
     // The GPIO pin can no longer be modified by the regular GPIO interface.
     nrf_gpiote_task_enable(drv_data->gpiote_channel);
 
-    // Configure timer interrupts on CC[0] (we only need one CC register)
-    //nrf_timer_int_enable(drv_data->timer, NRF_TIMER_INT_COMPARE0_MASK);
-
-    // Initialize the timer structures to the "STOPPED" state
-
-    // TODO: init GPIO pins to enable microstepping mode
-    // TODO: what is the correct microstepping mode? 1/2 step? 1/4 step?
-    //gpio_pin_configure(drv_data->gpio_dev, drv_data->step_pin, GPIO_DIR_OUT);
-    gpio_pin_configure(drv_data->gpio_dev, drv_data->dir_pin, GPIO_DIR_OUT);
-    gpio_pin_configure(drv_data->gpio_dev, drv_data->m0_pin, GPIO_DIR_OUT);
-    gpio_pin_configure(drv_data->gpio_dev, drv_data->m1_pin, GPIO_DIR_OUT);
-    gpio_pin_configure(drv_data->gpio_dev, drv_data->m2_pin, GPIO_DIR_OUT);
+    // Enable the PPI channels that will be used to drive this motor
+    nrf_ppi_channel_enable(drv_data->ppi_channel_a);
+    nrf_ppi_channel_enable(drv_data->ppi_channel_b);
+#endif
 
     /* device_get_binding checks if driver_api is not zero before checking
 	 * device name.
@@ -219,7 +288,11 @@ int drv8825_set_pulse_per_second(struct device *dev, float pulse_per_second)
 
     drv_data->timer_ticks_pulse_off = nrf_timer_us_to_ticks(((1.0f / (float) pulse_per_second) * 1000000) - DRV8825_PULSE_WIDTH_US, TIMER_FREQUENCY);
 
-    // TODO: update timer CC registers
+    // CC0 is event B. GPIO off.
+    nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_on);
+
+    // CC1 is event C. GPIO on, and reset the timer
+    nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL1, drv_data->timer_ticks_pulse_off);
 
     return 0;
 }
@@ -248,43 +321,11 @@ int drv8825_start(struct device *dev)
     // Ensure the timer is Stopped and reset
     drv8825_stop(dev);
 
-    // Program the capture-compare limits
-    drv8825_program_timer(dev);
-
     // Initially set the GPIO
     nrf_gpiote_task_set(drv_data->gpiote_set_task);
 
     // Start the timer
     nrf_timer_task_trigger(drv_data->timer, NRF_TIMER_TASK_START);
-
-    return 0;
-}
-
-int drv8825_program_timer(struct device *dev)
-{
-    struct drv8825_data *drv_data = dev->driver_data;
-
-    /*
-    The pulse we want to make looks like this:
-     _____
-    |     |_________
-    A     B         C
-
-    This can be generated from a couple few discrete events:
-
-    A: t=0, GPIO on
-    B: t=20uS, GPIO off
-    C: t=(period - 20uS), reset timer
-
-    Interestingly, because this is continuous, events A and C are the same thing.
-
-    */
-
-    // CC0 is event B. GPIO off.
-    nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL0, drv_data->timer_ticks_pulse_on);
-
-    // CC1 is event C. GPIO on, and reset the timer
-    nrf_timer_cc_write(drv_data->timer, NRF_TIMER_CC_CHANNEL1, drv_data->timer_ticks_pulse_off);
 
     return 0;
 }
