@@ -1,9 +1,14 @@
 [
     {
         "name": "ARM GCC Toolchain",
-        "toolchainFile": "${workspaceRoot}/zephyr/cmake/toolchain/gccarmemb.cmake",
-        "cmakeSettings": {
-            "BOARD":"nrf52_pca10040"
+        "preferredGenerator": {
+            "name": "Ninja"
+        },
+        "keep": true,
+        "environmentVariables": {
+            "ZEPHYR_TOOLCHAIN_VARIANT": "gccarmemb",
+            "GCCARMEMB_TOOLCHAIN_PATH": "c:/Users/skall/Documents/GitHub/project-wobble/pkg/autom8ed.com.compilers.arm-none-eabi-gcc.6.3.1",
+            "ZEPHYR_BASE":"c:/Users/skall/Documents/GitHub/project-wobble/zephyr"
         }
     }
 ]

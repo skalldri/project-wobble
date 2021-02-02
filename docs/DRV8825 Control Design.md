@@ -43,3 +43,13 @@ When the ISR is next activated, the ISR examines the system state and performs t
 For the purposes of this robot, TIMER Method 2 will be implemented, as it provides a good tradeoff between complexity of design and ISR load on the system.
 
 Since this ISR is providing motor / balance control, it must be executed with a higher priority than other long-running ISRs. In particular, this ISR must execute at a higher priority than the RADIO ISR and the IMU ISR.
+
+## PPI
+The motor driver ISRs consume a lot of the available system CPU bandwidth. To avoid this, the system will use the Nordic Programmable Peripheral Interconned (PPI) to directly connect the timers to the GPIO outputs
+
+Each Timer has 4 CAPTURE/COMPARE registers, each of which emits a PPI event when it triggers. This is sufficient to build a simple state machine inside the timer PPI hardware.
+
+CC0 -> Rising edge of 20uS pulse
+CC1 -> Falling edge of 20uS pulse
+CC2 -> Delay, Timer Reset
+CC3 -> <Unused>

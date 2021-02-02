@@ -9,7 +9,7 @@
             "executable": "build/zephyr/zephyr.elf",
             "device": "NRF52832_XXAA",
             "showDevDebugOutput":false,
-            "runToMain": true,
+            "runToMain": false,
             "interface": "swd",
             "svdFile": "${workspaceFolder}/zephyr/ext/hal/nordic/nrfx/mdk/nrf52810.svd",
             "preRestartCommands": [
